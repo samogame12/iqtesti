@@ -216,6 +216,22 @@
   }
 
   function finishTest() {
+    // Tüm sorular cevaplandı mı kontrol et
+    for (let i = 0; i < questions.length; i++) {
+      const radios = document.getElementsByName(`q${i}`);
+      let answered = false;
+      for (const r of radios) {
+        if (r.checked) {
+          answered = true;
+          break;
+        }
+      }
+      if (!answered) {
+        alert(`${i + 1}. soruyu cevaplamadan sınavı bitiremezsin!`);
+        return; // Eksik varsa bitirme
+      }
+    }
+
     clearInterval(timer);
     document.getElementById("screen3").classList.add("hidden");
     document.getElementById("screen4").classList.remove("hidden");
