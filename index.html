@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>IQ Testi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #222;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px #000;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 16px;
+      background: #00ffcc;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+    .question {
+      margin: 20px 0;
+      text-align: left;
+    }
+    .question p {
+      font-weight: bold;
+    }
+    label {
+      display: block;
+      margin-left: 10px;
+      margin-top: 5px;
+    }
+    #timer {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #ff5050;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="screen1">
+  <h2>IQ Testine Hoş Geldin</h2>
+  <p><strong>Uyarı:</strong> Bir kere isim seçtikten sonra bir daha değiştiremezsin!</p>
+  <select id="nameSelect">
+    <option value="">İsim seç...</option>
+    <option value="Tuana">Tuana</option>
+    <option value="Pınar">Pınar</option>
+    <option value="Mert">Mert</option>
+    <option value="Nisa">Nisa</option>
+    <option value="Sare">Sare</option>
+    <option value="Eda">Eda</option>
+  </select><br />
+  <button onclick="startGame()">Oyna</button>
+</div>
+
+<div class="container hidden" id="screen2">
+  <h3>Merhaba <span id="selectedName"></span></h3>
+  <p>Numaranı gir:</p>
+  <input type="text" id="numberInput" /><br />
+  <button onclick="goToTest()">Tamam</button>
+</div>
+
+<div class="container hidden" id="screen3">
+  <div id="timer">Kalan süre: 1:30</div>
+  <form id="quizForm"></form>
+  <button onclick="finishTest()">Sınavı Bitir</button>
+</div>
+
+<div class="container hidden" id="screen4">
+  <h2>Sonuçlar</h2>
+  <p><strong>İsim:</strong> <span id="resultName"></span></p>
+  <p><strong>Numara:</strong> <span id="resultNumber"></span></p>
+  <p><strong>Puan:</strong> <span id="resultScore"></span></p>
+</div>
+
+<script>
+  let selectedName = "";
+  let selectedNumber = "";
+  let score = 0;
+  let timer;
+  let timeLeft = 90; // 1.5 dakika = 90 saniye
+
+  const questions = [
+    {
+      q: "Işık hızını ilk ölçen bilim insanı kimdir?",
+      a: ["Newton", "Einstein", "Galilei", "Roemer"],
+      correct: 3,
+    },
+    {
+      q: "Pi sayısı yaklaşık olarak kaçtır?",
+      a: ["2.14", "3.14", "4.14", "5.14"],
+      correct: 1,
+    },
+    {
+      q: "En küçük asal sayı hangisidir?",
+      a: ["0", "1", "2", "3"],
+      correct: 2,
+    },
+    {
+      q: "Bir üçgenin iç açılar toplamı kaç derecedir?",
+      a: ["90", "180", "270", "360"],
+      correct: 1,
+    },
+    {
+      q: "DNA'nın yapısını kim keşfetti?",
+      a: ["Watson & Crick", "Einstein", "Newton", "Tesla"],
+      correct: 0,
+    },
+    {
+      q: "En büyük iki basamaklı sayı nedir?",
+      a: ["90", "95", "99", "100"],
+      correct: 2,
+    },
+    {
+      q: "Hangi sayı çifttir?",
+      a: ["3", "7", "9", "8"],
+      correct: 3,
+    },
+    {
+      q: "1 saatte kaç saniye vardır?",
+      a: ["360", "600", "3600", "6000"],
+      correct: 2,
+    },
+    {
+      q: "Türkiye'nin başkenti neresidir?",
+      a: ["İstanbul", "İzmir", "Bursa", "Ankara"],
+      correct: 3,
+    },
+    {
+      q: "5 x 6 = ?",
+      a: ["30", "35", "25", "40"],
+      correct: 0,
+    },
+  ];
+
+  function startGame() {
+    const select = document.getElementById("nameSelect");
+    if (select.value === "") {
+      alert("Lütfen bir isim seç.");
+      return;
+    }
+    selectedName = select.value;
+    select.disabled = true;
+    document.getElementById("screen1").classList.add("hidden");
+    document.getElementById("screen2").classList.remove("hidden");
+    document.getElementById("selectedName").innerText = selectedName;
+  }
+
+  function goToTest() {
+    const num = document.getElementById("numberInput").value.trim();
+    if (num === "") {
+      alert("Numara girmelisin!");
+      return;
+    }
+    selectedNumber = num;
+    document.getElementById("screen2").classList.add("hidden");
+    document.getElementById("screen3").classList.remove("hidden");
+    loadQuiz();
+    startTimer();
+  }
+
+  function loadQuiz() {
+    const form = document.getElementById("quizForm");
+    questions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `<p>${i + 1}. ${q.q} <br><span style="color:#0f0;">(Bu soru 10 puandır)</span></p>`;
+      q.a.forEach((opt, j) => {
+        const id = `q${i}_${j}`;
+        div.innerHTML += `
+          <label>
+            <input type="radio" name="q${i}" id="${id}" onclick="lockAnswer('${id}', ${i}, ${j})">
+            ${opt}
+          </label>`;
+      });
+      form.appendChild(div);
+    });
+  }
+
+  function lockAnswer(id, qIndex, selectedIndex) {
+    const radios = document.getElementsByName(`q${qIndex}`);
+    radios.forEach((r) => (r.disabled = true));
+    if (selectedIndex === questions[qIndex].correct) {
+      score += 10;
+    }
+  }
+
+  function startTimer() {
+    timer = setInterval(() => {
+      timeLeft--;
+      const min = Math.floor(timeLeft / 60);
+      const sec = timeLeft % 60;
+      document.getElementById(
+        "timer"
+      ).innerText = `Kalan süre: ${min}:${sec < 10 ? "0" : ""}${sec}`;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        finishTest();
+      }
+    }, 1000);
+  }
+
+  function finishTest() {
+    clearInterval(timer);
+    document.getElementById("screen3").classList.add("hidden");
+    document.getElementById("screen4").classList.remove("hidden");
+    document.getElementById("resultName").innerText = selectedName;
+    document.getElementById("resultNumber").innerText = selectedNumber;
+    document.getElementById("resultScore").innerText = score;
+
+    let yorum = "";
+    if (score <= 30) yorum = "Beyinsizsin yemin ediyorum mal";
+    else if (score === 40) yorum = "Lan bi 10 puan daha alsaydın";
+    else if (score === 50) yorum = "Hadi yine iyisin tam sınırdasın he";
+    else if (score === 60) yorum = "Geçmişsin la helal";
+    else if (score >= 70 && score <= 90) yorum = "Helal lan sana";
+    else if (score === 100) yorum = "Vay be afferin lan";
+
+    const yorumP = document.createElement("p");
+    yorumP.innerHTML = `<strong>Yorum:</strong> ${yorum}`;
+    document.getElementById("screen4").appendChild(yorumP);
+  }
+</script>
+
+</body>
+</html>
